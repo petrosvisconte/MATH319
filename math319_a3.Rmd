@@ -86,11 +86,21 @@ Note that the hessian at x0 is PD therefore it is convex and has a global minimi
 Part (d): Full algorithm implementation
 ```{r}
 count <- 0
+c1 <- 0.4
+ak <- 0.8
 norm_grad <- norm(c(grad_x0[1],grad_x0[2]), type="2")
 pk <- -grad(x0[1], x0[2])
+xk <- c(1.2, 1.2)
 
 while(count < 500 && norm_grad < 0.000001) {
- # while () 
+  x_ap = xk + ak*pk
+  f.x_ap = rosenbrock(x_ap[1], x_ap[2])
+  f.x = rosenbrock(xk[1], xk[2])
+  grad.x_cap = c1*ak*t(grad(xk[1], xk[2]))*pk 
+  while (f.x_ap > f.x + grad.x_cap) {
+    
+  }
+  count = count + 1
 }
 ```
 
