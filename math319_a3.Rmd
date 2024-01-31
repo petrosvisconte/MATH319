@@ -1,7 +1,7 @@
 ---
 title: "MATH319 -- Assignment 3"
 author: "Pierre Visconti"
-date: "January, 2024"
+date: "January 31, 2024"
 output:
   pdf_document:
     number_section: no
@@ -81,26 +81,67 @@ arrows(x0[1], x0[2], newt_x0[1], newt_x0[2])
  
 ```
 
-Note that the hessian at x0 is PD therefore it is convex and has a global minimizer p_k. Therefore Newton direction is well defined and the descent direction is given by p_k= -(hess)^(-1) * grad.   
+Note that the hessian at x0 is PD therefore it is convex and has a global minimizer p_k. Therefore Newton direction is well defined and the descent direction is given by p_k= -(hess)^(-1) * grad. The Newton direction looks better for minimizing f, for two reasons. First it is pointing more towards the optimal solution, and second, it has a smaller magnitude meaning that it will take less iterations to choose a desired step length.   
 
 Part (d): Full algorithm implementation
 ```{r}
-count <- 0
-c1 <- 0.4
-ak <- 0.8
-norm_grad <- norm(c(grad_x0[1],grad_x0[2]), type="2")
-pk <- -grad(x0[1], x0[2])
-xk <- c(1.2, 1.2)
+# make a contour plot
+x1 <- seq(0.97,1.25, length.out=100)
+x2 <- x1
+z <- outer(x1, x2,FUN=rosenbrock)
+plot_contour <- contour(x1, x2, z, nlevels=50, main="Contour Plot of Rosenbrock Function")
 
-while(count < 500 && norm_grad < 0.000001) {
-  x_ap = xk + ak*pk
-  f.x_ap = rosenbrock(x_ap[1], x_ap[2])
-  f.x = rosenbrock(xk[1], xk[2])
-  grad.x_cap = c1*ak*t(grad(xk[1], xk[2]))*pk 
+# plot initial point x0
+x0 = c(1.2, 1.2)
+points(x0[1], x0[2], col="blue", pch=16)
+
+
+count <- 0
+
+# initialize variables 
+c1 <- 0.4
+rho <- 0.8
+xk <- c(1.2, 1.2)
+grad_xk <- grad(xk[1], xk[2])
+norm_grad <- norm(c(grad_xk[1],grad_xk[2]), type="2")
+
+while(count < 500 && norm_grad > 0.000001) {
+  a <- 1
+  # choose a descent direction
+  pk <- -grad(xk[1], xk[2])
+  # initialize step length variables
+  x_ap <- xk + a*pk
+  f.x_ap <- rosenbrock(x_ap[1], x_ap[2])
+  f.x <- rosenbrock(xk[1], xk[2])
+  grad.x_cap <- c1*a*t(grad(xk[1], xk[2]))%*%pk 
+  # compute step length based on first Wolfe condition
   while (f.x_ap > f.x + grad.x_cap) {
-    
+    # update step length
+    a <- rho*a
+    # update inequality
+    x_ap <- xk + a*pk
+    f.x_ap <- rosenbrock(x_ap[1], x_ap[2])
+    grad.x_cap <- c1*a*t(grad(xk[1], xk[2]))%*%pk
   }
-  count = count + 1
+  # update ak and norm
+  xk_1 <- xk
+  xk <- xk + a*pk
+  grad_xk <- grad(xk[1], xk[2])
+  norm_grad <- norm(c(grad_xk[1],grad_xk[2]), type="2")
+  count <-  count + 1
+  # plot xk
+  points(xk[1], xk[2])
+  segments(xk_1[1], xk_1[2], xk[1], xk[2])
 }
+
+# plot optimal solution
+points(1,1, col="green", pch=16)
+
+print(count)
+print(xk)
 ```
+
+Part (e): Performance evaluation
+
+I believe that the algorithm performed well, considering it only took 194 iterations to obtain a final x_k value of (1.000001, 1.000002), which is close to the optimal solution of (1,1). Notably, lowering the norm exit condition to 0.0001 from 0.000001 lowered the iterations from 194 to 116 while having a final x_k value of 1.000084 and 1.000191 which could still be acceptable depending on your requirements. That being said, there is definently room for improvement as it wasted a lot of time zigzagging while barely moving in the direction of the optimal solution.  
 
