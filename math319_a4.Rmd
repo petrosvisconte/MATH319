@@ -1,0 +1,191 @@
+---
+title: "MATH319 -- Assignment 4"
+author: "Pierre Visconti"
+date: "February 21, 2024"
+output:
+  pdf_document:
+    number_section: no
+  html_document:
+    df_print: paged
+course: MATH319
+---
+
+# Part (a): 
+Defining parameters
+```{r}
+x0 <- c(1.2, 1.2)
+c1 <- 0.4
+rho <- 0.8
+tol <- 0.000001
+iter <- 500
+
+```
+
+Creating functions
+```{r}
+# rosenbrock function
+rosenbrock <- function(x1, x2) {
+  out <- (x2-x1^2)^2 + (1-x1)^2
+  return(out)
+}
+# compute the gradient
+grad <- function(x1, x2) {
+  c(-4*x1*(x2-x1^2)-2*(1-x1), 2*(x2-x1^2))
+}
+# compute the hess
+hess <- function(x1, x2) {
+  matrix(c(-4*x2+12*x1^2+2, -4*x1, -4*x1, 2), 2, 2) 
+}
+```
+
+## Steepest Descent:
+```{r}
+# make a contour plot
+x1 <- seq(0.9, 1.3, length.out=100)
+x2 <- x1
+z <- outer(x1, x2,FUN=rosenbrock)
+plot_contour <- contour(x1, x2, z, nlevels=50, main="Contour Plot of Rosenbrock Function - Steepest Descent")
+# plot initial point x0
+points(x0[1], x0[2], col="blue", pch=16)
+
+# initialize variables 
+xk <- x0
+norm_g <- norm(c(grad(xk[1], xk[2])[1], grad(xk[1], xk[2])[2]), type="2")
+count <- 0
+
+# algorithm logic
+while(count < iter && norm_g > tol) {
+  a <- 1
+  # choose a descent direction
+  pk <- -grad(xk[1], xk[2])
+  # initialize step length variables
+  x_ap <- xk + a*pk
+  wolfe = rosenbrock(x_ap[1], x_ap[2]) < (rosenbrock(xk[1], xk[2]) + c1*a*t(grad(xk[1], xk[2]))%*%pk) 
+  # compute step length based on first Wolfe condition
+  while (!wolfe) {
+    # update step length
+    a <- rho*a
+    # update wolfe condition
+    x_ap <- xk + a*pk
+    wolfe = rosenbrock(x_ap[1], x_ap[2]) < (rosenbrock(xk[1], xk[2]) + c1*a*t(grad(xk[1], xk[2]))%*%pk)
+  }
+  # update iterate and norm
+  xk_1 <- xk
+  xk <- xk + a*pk
+  norm_g <- norm(c(grad(xk[1], xk[2])[1], grad(xk[1], xk[2])[2]), type="2")
+  count <-  count + 1
+  # plot iterate
+  points(xk[1], xk[2])
+  segments(xk_1[1], xk_1[2], xk[1], xk[2])
+}
+
+# plot optimal solution
+points(1,1, col="green", pch=16)
+
+cat("Iterations: ", count)
+cat("Optimal value: ", xk)
+```
+
+## Newton Descent:
+```{r}
+# make a contour plot
+x1 <- seq(0.9, 1.3, length.out=100)
+x2 <- x1
+z <- outer(x1, x2,FUN=rosenbrock)
+plot_contour <- contour(x1, x2, z, nlevels=50, main="Contour Plot of Rosenbrock Function - Newton Descent")
+# plot initial point x0
+points(x0[1], x0[2], col="blue", pch=16)
+
+# initialize variables 
+xk <- x0
+norm_g <- norm(c(grad(xk[1], xk[2])[1], grad(xk[1], xk[2])[2]), type="2")
+count <- 0
+
+# algorithm logic
+while(count < iter && norm_g > tol) {
+  a <- 1
+  # choose a descent direction, fix the hess if not PD
+  if (all(eigen(hess(xk[1], xk[2]))$values > 0)) {
+    pk <- -solve(hess(xk[1], xk[2])) %*% grad(xk[1], xk[2])
+  } else {
+    pk <- -solve(hess(xk[1], xk[2]) + tol*diag(2)) %*% grad(xk[1], xk[2])
+  }
+  # initialize step length variables
+  x_ap <- xk + a*pk
+  wolfe = rosenbrock(x_ap[1], x_ap[2]) < (rosenbrock(xk[1], xk[2]) + c1*a*t(grad(xk[1], xk[2]))%*%pk) 
+  # compute step length based on first Wolfe condition
+  while (!wolfe) {
+    # update step length
+    a <- rho*a
+    # update wolfe condition
+    x_ap <- xk + a*pk
+    wolfe = rosenbrock(x_ap[1], x_ap[2]) < (rosenbrock(xk[1], xk[2]) + c1*a*t(grad(xk[1], xk[2]))%*%pk)
+  }
+  # update iterate and norm
+  xk_1 <- xk
+  xk <- xk + a*pk
+  norm_g <- norm(c(grad(xk[1], xk[2])[1], grad(xk[1], xk[2])[2]), type="2")
+  count <-  count + 1
+  # plot iterate
+  points(xk[1], xk[2])
+  segments(xk_1[1], xk_1[2], xk[1], xk[2])
+}
+
+# plot optimal solution
+points(1,1, col="green", pch=16)
+
+cat("Iterations: ", count)
+cat("Optimal value: ", xk)
+```
+## Fletcher-Reeves CG:
+```{r}
+# make a contour plot
+x1 <- seq(0.9, 1.3, length.out=100)
+x2 <- x1
+z <- outer(x1, x2,FUN=rosenbrock)
+plot_contour <- contour(x1, x2, z, nlevels=50, main="Contour Plot of Rosenbrock Function - Fletcher-Reeves CG")
+# plot initial point x0
+points(x0[1], x0[2], col="blue", pch=16)
+
+# initialize variables 
+xk <- x0
+norm_g <- norm(c(grad(xk[1], xk[2])[1], grad(xk[1], xk[2])[2]), type="2")
+count <- 0
+
+# algorithm logic
+while(count < iter && norm_g > tol) {
+  a <- 1
+  # choose a descent direction, fix the hess if not PD
+  if (all(eigen(hess(xk[1], xk[2]))$values > 0)) {
+    pk <- -solve(hess(xk[1], xk[2])) %*% grad(xk[1], xk[2])
+  } else {
+    pk <- -solve(hess(xk[1], xk[2]) + tol*diag(2)) %*% grad(xk[1], xk[2])
+  }
+  # initialize step length variables
+  x_ap <- xk + a*pk
+  wolfe = rosenbrock(x_ap[1], x_ap[2]) < (rosenbrock(xk[1], xk[2]) + c1*a*t(grad(xk[1], xk[2]))%*%pk) 
+  # compute step length based on first Wolfe condition
+  while (!wolfe) {
+    # update step length
+    a <- rho*a
+    # update wolfe condition
+    x_ap <- xk + a*pk
+    wolfe = rosenbrock(x_ap[1], x_ap[2]) < (rosenbrock(xk[1], xk[2]) + c1*a*t(grad(xk[1], xk[2]))%*%pk)
+  }
+  # update iterate and norm
+  xk_1 <- xk
+  xk <- xk + a*pk
+  norm_g <- norm(c(grad(xk[1], xk[2])[1], grad(xk[1], xk[2])[2]), type="2")
+  count <-  count + 1
+  # plot iterate
+  points(xk[1], xk[2])
+  segments(xk_1[1], xk_1[2], xk[1], xk[2])
+}
+
+# plot optimal solution
+points(1,1, col="green", pch=16)
+
+cat("Iterations: ", count)
+cat("Optimal value: ", xk)
+```
+
