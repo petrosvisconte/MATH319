@@ -201,7 +201,7 @@ cat("Iterations: ", count)
 cat("Optimal value: ", xk)
 ```
 ## Discussion:
-TODO
+Steepest Descent took 194 iterations and obtained an optimal solution of (1.000001, 1.000002). Newton Descent took 4 iterations and obtained an optimal solution of (1,1). Fletcher-Reeves Conjugate Gradient took 36 iterations and obtained an optimal solution of (1,1). The worst performer, based on number of iterations and the fact that the exact solution was not reached, was Steepest Descent. While Newton Descent only took 4 iterations and FR-CG took 36, Newton Descent requires calculating the inverse of a matrix with every iteration while FR-CG does not, thus the actual computation time per iteration for FR-CG is significantly lower, especially for very large matrices. Therefore FR-CG was the best performer.  
 
 
 # Part (b):
@@ -242,6 +242,12 @@ plot_contour <- contour(x1, x2, z, nlevels=50,
 steepest_descent(func_b, c(0, 6.1))
 steepest_descent(func_b, c(0, 5.9))
 steepest_descent(func_b, c(6.5, 13))
+# find the function value for each optimal solution found
+func_b(-3.141592, 12.275)
+func_b(3.141593, 2.275)
+func_b(9.424778, 2.475)
 points(-10,-10) # used to display plot as final output
 ```
 
+## Discussion:
+The algorithm arrived to three different solutions, yet all three give the same optimal value when plugged back into the function, thus they are all optimal solutions. 
